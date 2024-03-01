@@ -15,6 +15,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
@@ -51,6 +52,10 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private ArrayList<String> permissionsToRequest;
     private ArrayList<String> permissions = new ArrayList<>();
     private ArrayList<String> permissionsRejected = new ArrayList<>();
+    private LocationRequest locationRequest;
+
+    public static final long UPDATE_INTERVAL = 5000;
+    public static final long FASTEST_INTERVAL = 5000;
 
 
     @Override
@@ -75,9 +80,10 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                 .addConnectionCallbacks(this)
                 .build();
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+//        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+//        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
+//        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -199,8 +205,11 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         Cheack again, maybe human error
          */
         if(ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-        && ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         fusedLocationProviderClient.getLastLocation()
@@ -210,6 +219,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                         // get last known location, ti maybe null
                         if(location != null){
                             Log.d("Main", "onSuccess: " + location.getLatitude());
+                            binding.locationTV.setText("Long: " + location.getLongitude() + "Lati:" + location.getLatitude());
                         }
                     }
                 });
@@ -217,7 +227,20 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     }
 
     private void startLocationUpdates() {
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
+
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+        if(ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(MainActivity.this, "Enable Location Permission", Toast.LENGTH_LONG)
+                    .show();
+        }
     }
 
     @Override
